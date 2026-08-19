@@ -8,10 +8,16 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ onLoginSuccess }) => {
+  const isInstructorPath =
+    typeof window !== 'undefined' &&
+    (window.location.pathname.includes('instructor') ||
+      window.location.pathname.includes('teacher') ||
+      window.location.pathname.includes('admin'));
+
   const [isRegistering, setIsRegistering] = useState<boolean>(false);
   const [name, setName] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-  const [role, setRole] = useState<UserRole>('Student');
+  const [role, setRole] = useState<UserRole>(isInstructorPath ? 'Teacher' : 'Student');
   const [teacherPasscode, setTeacherPasscode] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [error, setError] = useState<string>('');

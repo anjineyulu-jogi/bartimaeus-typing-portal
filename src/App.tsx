@@ -42,9 +42,35 @@ export const App: React.FC = () => {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [progressList, setProgressList] = useState<Progress[]>([]);
 
+  // Determine initial view from URL path
+  const getInitialViewFromPath = (): 'student' | 'instructor' => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname.toLowerCase();
+      if (path.includes('instructor') || path.includes('teacher') || path.includes('admin')) {
+        return 'instructor';
+      }
+    }
+    return 'student';
+  };
+
   // Navigation Views
-  const [activeView, setActiveView] = useState<'student' | 'instructor' | 'practice'>('student');
+  const [activeView, setActiveView] = useState<'student' | 'instructor' | 'practice'>(getInitialViewFromPath);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+
+  // Sync URL in address bar when activeView changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const targetPath =
+        activeView === 'instructor'
+          ? '/instructor'
+          : activeView === 'practice'
+          ? '/practice'
+          : '/student';
+      if (window.location.pathname !== targetPath) {
+        window.history.replaceState(null, '', targetPath);
+      }
+    }
+  }, [activeView]);
 
   // Accessibility Settings
   const [theme, setTheme] = useState<ThemeMode>(loadTheme);
