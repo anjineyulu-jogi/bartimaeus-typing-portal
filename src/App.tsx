@@ -5,11 +5,16 @@ import {
   loadAudioEnabled,
   loadFontSize,
   loadTheme,
+  loadUsers,
+  loadAssignments,
   saveActiveUser,
   saveAudioEnabled,
   saveFontSize,
   saveTheme,
+  saveUsers,
+  saveAssignments,
 } from './data/storage';
+import { DEFAULT_ASSIGNMENTS } from './data/defaultCurriculum';
 import {
   apiFetchCurriculum,
   apiFetchProgress,
@@ -23,23 +28,20 @@ import { InstructorPortal } from './components/instructor/InstructorPortal';
 import { TypingEngineView } from './components/typing/TypingEngineView';
 import { ShortcutsModal } from './components/common/ShortcutsModal';
 import { AuthModal } from './components/auth/AuthModal';
-import { loadUsers, saveUsers } from './data/storage';
 
 export const App: React.FC = () => {
-  // Authentication State
+  // Session & User State
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     try {
       const active = loadActiveUser();
-      // If user has no password or is default unauthenticated state, return null on fresh launch
       const raw = localStorage.getItem('bartimaeus_typing_active_user');
       return raw ? active : null;
     } catch {
       return null;
     }
   });
-
   const [users, setUsers] = useState<User[]>(loadUsers);
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>(loadAssignments);
   const [progressList, setProgressList] = useState<Progress[]>([]);
 
   // Determine initial view from URL path
@@ -80,7 +82,15 @@ export const App: React.FC = () => {
 
   // Sync Curriculum & Progress on Boot / Login
   const refreshData = useCallback(async (userId?: string) => {
-    const cur = await apiFetchCurriculum();
+    let cur = await apiFetchCurriculum();
+    if (!cur || cur.length < DEFAULT_ASSIGNMENTS.length) {
+      const defaultIds = new Set(DEFAULT_ASSIGNMENTS.map((d) => d.id));
+      const custom = (cur || []).filter((c) => !defaultIds.has(c.id));
+      cur = [...DEFAULT_ASSIGNMENTS, ...custom].sort(
+        (a, b) => (a.orderIndex || 0) - (b.orderIndex || 0)
+      );
+      saveAssignments(cur);
+    }
     setAssignments(cur);
 
     if (userId) {

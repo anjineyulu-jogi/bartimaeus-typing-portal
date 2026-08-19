@@ -118,9 +118,18 @@ export async function apiFetchCurriculum(): Promise<Assignment[]> {
       const res = await fetch(`${API_BASE}/curriculum`);
       if (res.ok) {
         const data = await res.json();
-        if (data.assignments && data.assignments.length > 0) {
+        if (data.assignments && data.assignments.length >= 28) {
           saveAssignments(data.assignments);
           return data.assignments;
+        } else if (data.assignments && data.assignments.length > 0) {
+          // If server has old curriculum, sync the full 28 default assignments to the server
+          const localUpdated = loadAssignments();
+          fetch(`${API_BASE}/curriculum/sync`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ assignments: localUpdated }),
+          }).catch(() => {});
+          return localUpdated;
         }
       }
     }

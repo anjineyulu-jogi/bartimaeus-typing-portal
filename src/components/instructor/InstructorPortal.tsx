@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Assignment, Progress, User, AssignmentCategory } from '../../types';
-import { Plus, Edit3, Trash2, Download, Users, FileText, CheckCircle2, XCircle, Clock, Target, Search, BarChart3, KeyRound } from 'lucide-react';
+import { Plus, Edit3, Trash2, Download, Users, FileText, CheckCircle2, XCircle, Clock, Target, Search, BarChart3, KeyRound, RotateCcw } from 'lucide-react';
+import { DEFAULT_ASSIGNMENTS } from '../../data/defaultCurriculum';
 
 interface InstructorPortalProps {
   currentUser: User;
@@ -274,13 +275,28 @@ export const InstructorPortal: React.FC<InstructorPortalProps> = ({
             <h2 id="assignments-tab-heading" className="section-title">
               Configured Sequential Typing Curriculum
             </h2>
-            <button
-              onClick={() => handleOpenEditAssignment()}
-              className="btn btn-primary btn-sm"
-              aria-label="Add new drill assignment"
-            >
-              <Plus size={16} aria-hidden="true" /> Add Lesson
-            </button>
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <button
+                onClick={() => {
+                  if (window.confirm('Sync and reload the complete 28-lesson official curriculum across all 7 categories?')) {
+                    DEFAULT_ASSIGNMENTS.forEach((assign) => onSaveAssignment(assign));
+                    alert('Official 28-Lesson Curriculum Synced Successfully!');
+                  }
+                }}
+                className="btn btn-secondary btn-sm"
+                aria-label="Sync full official 28-lesson curriculum"
+                title="Reload the 28 comprehensive lessons across all 7 categories"
+              >
+                <RotateCcw size={16} aria-hidden="true" /> Sync Official Curriculum (28 Lessons)
+              </button>
+              <button
+                onClick={() => handleOpenEditAssignment()}
+                className="btn btn-primary btn-sm"
+                aria-label="Add new drill assignment"
+              >
+                <Plus size={16} aria-hidden="true" /> Add Lesson
+              </button>
+            </div>
           </div>
 
           <div className="assignments-table-wrapper">
