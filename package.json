@@ -11,6 +11,10 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@types/node": "^22.13.4",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.4",
     "canvas-confetti": "^1.9.4",
     "compression": "^1.7.5",
     "cors": "^2.8.5",
@@ -19,7 +23,9 @@
     "lucide-react": "^1.16.0",
     "morgan": "^1.10.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.2.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",
@@ -29,13 +35,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/morgan": "^1.9.9",
-    "@types/node": "^22.13.4",
-    "@types/react": "^19.0.10",
-    "@types/react-dom": "^19.0.4",
-    "@vitejs/plugin-react": "^4.3.4",
     "jsdom": "^29.1.1",
-    "typescript": "^5.7.3",
-    "vite": "^6.2.0",
     "vitest": "^3.0.5"
   }
 }
