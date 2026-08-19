@@ -605,7 +605,7 @@ export const InstructorPortal: React.FC<InstructorPortalProps> = ({
                   <select
                     id="assign-category-select"
                     className="select-control"
-                    value={editingAssignment.category || 'Phase 1: Home Row Fundamentals'}
+                    value={editingAssignment.category || 'Category 1: Tactile Foundations & Home Row'}
                     onChange={(e) =>
                       setEditingAssignment({
                         ...editingAssignment,
@@ -613,13 +613,13 @@ export const InstructorPortal: React.FC<InstructorPortalProps> = ({
                       })
                     }
                   >
-                    <option value="Phase 1: Home Row Fundamentals">Phase 1: Home Row Fundamentals</option>
-                    <option value="Phase 1: Top Row & Vowels">Phase 1: Top Row & Vowels</option>
-                    <option value="Phase 1: Bottom Row & Shifts">Phase 1: Bottom Row & Shifts</option>
-                    <option value="Phase 2: Numbers & Symbols">Phase 2: Numbers & Symbols</option>
-                    <option value="Phase 2: Screen Reader Vocabulary">Phase 2: Screen Reader Vocabulary</option>
-                    <option value="Phase 3: Cloud Gateway & Workspace">Phase 3: Cloud Gateway & Workspace</option>
-                    <option value="Phase 4: High-Speed Stamina">Phase 4: High-Speed Stamina</option>
+                    <option value="Category 1: Tactile Foundations & Home Row">Category 1: Tactile Foundations & Home Row</option>
+                    <option value="Category 2: Upper & Lower Row Reach Mastery">Category 2: Upper & Lower Row Reach Mastery</option>
+                    <option value="Category 3: Indian Govt Basic Course (GCC-TBC 30 WPM)">Category 3: Indian Govt Basic Course (GCC-TBC 30 WPM)</option>
+                    <option value="Category 4: Numbers, Punctuation & Tactile Symbols">Category 4: Numbers, Punctuation & Tactile Symbols</option>
+                    <option value="Category 5: Accuracy Mastery & Double-Letter Drills">Category 5: Accuracy Mastery & Double-Letter Drills</option>
+                    <option value="Category 6: Professional Sentence Formatting (SLBC)">Category 6: Professional Sentence Formatting (SLBC)</option>
+                    <option value="Category 7: Screen Reader Commands & Speed Endurance">Category 7: Screen Reader Commands & Speed Endurance</option>
                     <option value="Custom Drills">Custom Drills</option>
                   </select>
                 </div>

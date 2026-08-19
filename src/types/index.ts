@@ -16,6 +16,13 @@ export interface User {
 }
 
 export type AssignmentCategory =
+  | 'Category 1: Tactile Foundations & Home Row'
+  | 'Category 2: Upper & Lower Row Reach Mastery'
+  | 'Category 3: Indian Govt Basic Course (GCC-TBC 30 WPM)'
+  | 'Category 4: Numbers, Punctuation & Tactile Symbols'
+  | 'Category 5: Accuracy Mastery & Double-Letter Drills'
+  | 'Category 6: Professional Sentence Formatting (SLBC)'
+  | 'Category 7: Screen Reader Commands & Speed Endurance'
   | 'Phase 1: Home Row Fundamentals'
   | 'Phase 1: Top Row & Vowels'
   | 'Phase 1: Bottom Row & Shifts'
@@ -23,7 +30,8 @@ export type AssignmentCategory =
   | 'Phase 2: Screen Reader Vocabulary'
   | 'Phase 3: Cloud Gateway & Workspace'
   | 'Phase 4: High-Speed Stamina'
-  | 'Custom Drills';
+  | 'Custom Drills'
+  | string;
 
 export interface Assignment {
   id: string;
