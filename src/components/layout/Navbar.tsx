@@ -78,7 +78,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Authenticated User Badge */}
         <div className="user-profile-badge" aria-label={`Logged in as ${currentUser.name} (${currentUser.role})`}>
           <span className="user-avatar-mini" aria-hidden="true">
-            {isTeacher ? '👨‍🏫' : '👤'}
+            {isSuperAdmin ? '👑' : isTeacherOrAdmin ? '👨‍🏫' : '👤'}
           </span>
           <span className="user-name-text">
             <strong>{currentUser.name}</strong>
