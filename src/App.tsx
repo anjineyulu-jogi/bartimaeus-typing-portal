@@ -244,7 +244,7 @@ export const App: React.FC = () => {
             onToggleAudio={handleToggleAudio}
             onOpenShortcuts={() => setIsShortcutsOpen(true)}
           />
-        ) : activeView === 'instructor' && currentUser.role === 'Teacher' ? (
+        ) : activeView === 'instructor' && (currentUser.role === 'Teacher' || currentUser.role === 'SuperAdmin') ? (
           <InstructorPortal
             currentUser={currentUser}
             users={users}

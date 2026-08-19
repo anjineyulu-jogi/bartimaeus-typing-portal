@@ -30,7 +30,7 @@ async function isServerOnline(): Promise<boolean> {
 export async function apiRegister(
   name: string,
   password: string,
-  role: 'Student' | 'Teacher' = 'Student',
+  role: UserRole = 'Student',
   notes?: string,
   teacherPasscode?: string
 ): Promise<{ success: boolean; user?: User; error?: string }> {
@@ -58,18 +58,27 @@ export async function apiRegister(
     return { success: false, error: 'An account with this name already exists. Please log in.' };
   }
 
-  if (role === 'Teacher' && teacherPasscode !== 'bartimaeus2026' && teacherPasscode !== 'admin') {
-    return { success: false, error: 'Invalid Teacher Access Passcode' };
+  let assignedRole: UserRole = 'Student';
+  if (role === 'Teacher' || role === 'SuperAdmin') {
+    const code = teacherPasscode?.trim().toLowerCase();
+    if (code === 'director2026' || code === 'superadmin') {
+      assignedRole = 'SuperAdmin';
+    } else if (code === 'bartimaeus2026' || code === 'admin') {
+      assignedRole = 'Teacher';
+    } else {
+      return { success: false, error: 'Invalid Staff/Director Access Passcode' };
+    }
   }
 
   const newUser: User = {
     id: `user-${Date.now()}`,
     name: name.trim(),
-    role,
+    role: assignedRole,
     password: password.trim(),
-    notes: notes?.trim() || `${role} account`,
+    notes: notes?.trim() || `${assignedRole} account`,
     createdAt: new Date().toISOString(),
     lastLogin: new Date().toISOString(),
+    isActive: true,
   };
 
   users.push(newUser);

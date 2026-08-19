@@ -2,7 +2,7 @@
  * Core Data Models & Type Definitions for Bartimaeus Accessible Typing System
  */
 
-export type UserRole = 'Teacher' | 'Student';
+export type UserRole = 'SuperAdmin' | 'Teacher' | 'Student';
 
 export interface User {
   id: string;
@@ -13,6 +13,7 @@ export interface User {
   notes?: string;
   createdAt?: string;
   lastLogin?: string;
+  isActive?: boolean;
 }
 
 export type AssignmentCategory =

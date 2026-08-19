@@ -29,7 +29,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleAudio,
   onOpenShortcuts,
 }) => {
-  const isTeacher = currentUser.role === 'Teacher';
+  const isTeacherOrAdmin = currentUser.role === 'Teacher' || currentUser.role === 'SuperAdmin';
+  const isSuperAdmin = currentUser.role === 'SuperAdmin';
 
   return (
     <header className="app-navbar" role="banner">
@@ -40,7 +41,9 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
         <div className="brand-text">
           <span className="brand-title">Bartimaeus</span>
-          <span className="brand-subtitle">Accessible Typing Engine</span>
+          <span className="brand-subtitle">
+            {isSuperAdmin ? 'SuperAdmin Console' : isTeacherOrAdmin ? 'Instructor Hub' : 'Accessible Typing'}
+          </span>
         </div>
       </div>
 
@@ -53,19 +56,19 @@ export const Navbar: React.FC<NavbarProps> = ({
           aria-label="Student Practice Portal"
         >
           <UserCheck size={18} aria-hidden="true" />
-          <span>{isTeacher ? 'Student Practice Preview' : 'My Practice Pathway'}</span>
+          <span>{isTeacherOrAdmin ? 'Student Practice Preview' : 'My Practice Pathway'}</span>
         </button>
 
-        {/* Only Instructor / Teacher can see Instructor Hub */}
-        {isTeacher && (
+        {/* Teacher or SuperAdmin can access Management Hub */}
+        {isTeacherOrAdmin && (
           <button
             className={`nav-btn ${activeView === 'instructor' ? 'active' : ''}`}
             onClick={() => onNavigateView('instructor')}
             aria-current={activeView === 'instructor' ? 'page' : undefined}
-            aria-label="Instructor Management Portal"
+            aria-label={isSuperAdmin ? 'SuperAdmin Management Hub' : 'Instructor Administration Hub'}
           >
             <Shield size={18} aria-hidden="true" />
-            <span>Instructor Hub</span>
+            <span>{isSuperAdmin ? 'SuperAdmin Hub' : 'Instructor Hub'}</span>
           </button>
         )}
       </nav>

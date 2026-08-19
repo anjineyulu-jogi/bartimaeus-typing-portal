@@ -54,7 +54,7 @@ describe('Accessibility Components, Auth & Sequential Locking', () => {
 
   it('3. StudentPortal strictly unlocks Lesson 1 and locks Lesson 2 until Lesson 1 is completed', () => {
     const onSelectMock = vi.fn();
-    const studentUser: User = DEFAULT_USERS[1]; // Aarav Sharma
+    const studentUser: User = DEFAULT_USERS.find((u) => u.role === 'Student') || DEFAULT_USERS[2]; // Aarav Sharma
 
     // No progress yet
     const { rerender } = render(
@@ -145,15 +145,15 @@ describe('Accessibility Components, Auth & Sequential Locking', () => {
     });
   });
 
-  it('6. InstructorPortal renders curriculum and manages students', () => {
+  it('6. InstructorPortal renders curriculum and manages students and staff', () => {
     const onSaveAssignmentMock = vi.fn();
     const onDeleteAssignmentMock = vi.fn();
     const onAddUserMock = vi.fn();
-    const teacherUser: User = DEFAULT_USERS[0];
+    const superAdminUser: User = DEFAULT_USERS[0];
 
-    render(
+    const { rerender } = render(
       <InstructorPortal
-        currentUser={teacherUser}
+        currentUser={superAdminUser}
         users={DEFAULT_USERS}
         assignments={DEFAULT_ASSIGNMENTS}
         progressList={[]}
@@ -163,8 +163,24 @@ describe('Accessibility Components, Auth & Sequential Locking', () => {
       />
     );
 
-    expect(screen.getByText(/Instructor Administration Portal/i)).toBeDefined();
+    expect(screen.getByText(/SuperAdmin Master Administration Hub/i)).toBeDefined();
     expect(screen.getByText(/Sequential Curriculum/i)).toBeDefined();
+    expect(screen.getByRole('tab', { name: /Staff Instructors/i })).toBeDefined();
+
+    // Verify Teacher role does not see Staff Instructors tab
+    const staffTeacherUser: User = DEFAULT_USERS[1];
+    rerender(
+      <InstructorPortal
+        currentUser={staffTeacherUser}
+        users={DEFAULT_USERS}
+        assignments={DEFAULT_ASSIGNMENTS}
+        progressList={[]}
+        onSaveAssignment={onSaveAssignmentMock}
+        onDeleteAssignment={onDeleteAssignmentMock}
+        onAddUser={onAddUserMock}
+      />
+    );
+    expect(screen.queryByRole('tab', { name: /Staff Instructors/i })).toBeNull();
 
     // Click Create Lesson
     const createBtn = screen.getByRole('button', { name: /Create New Typing Assignment/i });

@@ -78,13 +78,24 @@ function writeJSONFile(filePath, data) {
 // Initial Data Seeding
 const INITIAL_USERS = [
   {
-    id: 'teacher-admin',
-    name: 'Bartimaeus Instructor',
-    role: 'Teacher',
+    id: 'superadmin-director',
+    name: 'Bartimaeus Director',
+    role: 'SuperAdmin',
     password: 'admin',
-    email: 'trainer@bartimaeus.org',
-    notes: 'Senior Assistive Technology Specialist & Lead Typing Instructor',
+    email: 'director@bartimaeus.org',
+    notes: 'Chief Director & Super Administrator (Full System Authority)',
     createdAt: '2026-08-19',
+    isActive: true,
+  },
+  {
+    id: 'teacher-admin',
+    name: 'Staff Instructor',
+    role: 'Teacher',
+    password: 'trainer123',
+    email: 'trainer@bartimaeus.org',
+    notes: 'Staff Typing Instructor & Student Evaluator',
+    createdAt: '2026-08-19',
+    isActive: true,
   },
   {
     id: 'student-demo',
@@ -94,11 +105,21 @@ const INITIAL_USERS = [
     email: 'aarav@bartimaeus.student',
     notes: 'Grade 9 - NVDA Screen Reader User',
     createdAt: '2026-08-19',
+    isActive: true,
   },
 ];
 
 function getUsers() {
-  return readJSONFile(USERS_FILE, INITIAL_USERS);
+  const current = readJSONFile(USERS_FILE, INITIAL_USERS);
+  if (Array.isArray(current)) {
+    const hasSuperAdmin = current.some((u) => u.role === 'SuperAdmin' || u.id === 'superadmin-director');
+    if (!hasSuperAdmin) {
+      const merged = [...INITIAL_USERS, ...current.filter((c) => !INITIAL_USERS.some((d) => d.id === c.id))];
+      saveUsers(merged);
+      return merged;
+    }
+  }
+  return current;
 }
 
 function saveUsers(users) {
@@ -957,13 +978,17 @@ app.post('/api/auth/register', (req, res) => {
     return res.status(400).json({ error: 'Password must be at least 3 characters' });
   }
 
-  // Teacher role verification
+  // Role verification
   let assignedRole = 'Student';
-  if (role === 'Teacher') {
-    if (teacherPasscode !== 'bartimaeus2026' && teacherPasscode !== 'admin') {
-      return res.status(403).json({ error: 'Invalid Teacher Access Passcode' });
+  if (role === 'Teacher' || role === 'SuperAdmin') {
+    const code = teacherPasscode?.trim().toLowerCase();
+    if (code === 'director2026' || code === 'superadmin') {
+      assignedRole = 'SuperAdmin';
+    } else if (code === 'bartimaeus2026' || code === 'admin') {
+      assignedRole = 'Teacher';
+    } else {
+      return res.status(403).json({ error: 'Invalid Staff/Director Access Passcode' });
     }
-    assignedRole = 'Teacher';
   }
 
   const users = getUsers();
