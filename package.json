@@ -30,6 +30,11 @@
     "typescript": "^5.7.3",
     "vite": "^6.2.0"
   },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "*",
+    "@rollup/rollup-linux-x64-musl": "*",
+    "@esbuild/linux-x64": "*"
+  },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",
