@@ -136,11 +136,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onLoginSuccess }) => {
               id="auth-password-input"
               type="password"
               required
+              minLength={3}
+              autoComplete={isRegistering ? 'new-password' : 'current-password'}
               className="input-control"
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              autoComplete={isRegistering ? 'new-password' : 'current-password'}
             />
           </div>
 

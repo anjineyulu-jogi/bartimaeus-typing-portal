@@ -1048,6 +1048,7 @@ export const InstructorPortal: React.FC<InstructorPortalProps> = ({
                   id="student-pass-input"
                   type="password"
                   required
+                  autoComplete="new-password"
                   className="input-control"
                   placeholder="Default password"
                   value={newStudentPassword}
