@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useTypingEngine } from '../hooks/useTypingEngine';
+import { useTypingEngine, getAccessibleCharName, formatWordForSpeech } from '../hooks/useTypingEngine';
 
 // Mock Web Audio API
 class AudioContextMock {
@@ -26,12 +26,36 @@ class AudioContextMock {
 
 (window as any).AudioContext = AudioContextMock;
 
-describe('useTypingEngine Accessibility & Typing Core', () => {
+describe('useTypingEngine Accessibility & Audio Engine', () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
 
-  it('1. Initializes with configurable properties (targetReps, timeLimitMinutes, drills)', () => {
+  it('1. Phonetic character translator maps symbols and case properly', () => {
+    expect(getAccessibleCharName(';')).toBe('semicolon');
+    expect(getAccessibleCharName(':')).toBe('colon');
+    expect(getAccessibleCharName(',')).toBe('comma');
+    expect(getAccessibleCharName('.')).toBe('period');
+    expect(getAccessibleCharName('?')).toBe('question mark');
+    expect(getAccessibleCharName('/')).toBe('slash');
+    expect(getAccessibleCharName(' ')).toBe('space');
+    expect(getAccessibleCharName('A')).toBe('capital a');
+    expect(getAccessibleCharName('f')).toBe('f');
+  });
+
+  it('2. Drill word speech formatter spells out anchor letter combinations and keeps real words', () => {
+    // Non-dictionary letter clusters spelled out
+    expect(formatWordForSpeech('asdf')).toBe('a, s, d, f');
+    expect(formatWordForSpeech('jkl;')).toBe('j, k, l, semicolon');
+    expect(formatWordForSpeech('fdsa')).toBe('f, d, s, a');
+    expect(formatWordForSpeech('aaa')).toBe('a, a, a');
+
+    // Real words kept natural
+    expect(formatWordForSpeech('salad')).toBe('salad');
+    expect(formatWordForSpeech('ask')).toBe('ask');
+  });
+
+  it('3. Initializes with configurable properties (targetReps, timeLimitMinutes, drills)', () => {
     const { result } = renderHook(() =>
       useTypingEngine({
         drills: ['apple banana'],
@@ -50,7 +74,7 @@ describe('useTypingEngine Accessibility & Typing Core', () => {
     expect(result.current.state.expectedChar).toBe('a');
   });
 
-  it('2. Starts session and updates prompter message with Target: [word]', () => {
+  it('4. Starts session and updates prompter message with Target: [word]', () => {
     const { result } = renderHook(() =>
       useTypingEngine({
         drills: ['hello world'],
@@ -69,7 +93,7 @@ describe('useTypingEngine Accessibility & Typing Core', () => {
     expect(result.current.state.statusMessage).toContain('Practice started. Rep 1 of 2.');
   });
 
-  it('3. Intercepts Backspace and Delete, calls preventDefault, and triggers Error state', () => {
+  it('5. Intercepts Backspace and announces immediate in-place error correction', () => {
     const { result } = renderHook(() =>
       useTypingEngine({
         drills: ['test drill'],
@@ -97,17 +121,17 @@ describe('useTypingEngine Accessibility & Typing Core', () => {
     expect(preventDefaultMock).toHaveBeenCalled();
     // Must record error
     expect(result.current.state.totalErrors).toBe(1);
-    // Must set assertive error message
-    expect(result.current.state.errorMessage).toBe('Error');
+    // Must set assertive in-place error correction prompt
+    expect(result.current.state.errorMessage).toBe('Wrong. Type t');
 
-    // After 500ms, error message must clear automatically
+    // After 1000ms, error message clears automatically
     act(() => {
-      vi.advanceTimersByTime(500);
+      vi.advanceTimersByTime(1000);
     });
     expect(result.current.state.errorMessage).toBe('');
   });
 
-  it('4. Evaluates typed keys against expectedChar and advances indices', () => {
+  it('6. Evaluates typed keys against expectedChar and advances indices', () => {
     const { result } = renderHook(() =>
       useTypingEngine({
         drills: ['cat dog'],
@@ -161,7 +185,7 @@ describe('useTypingEngine Accessibility & Typing Core', () => {
     expect(result.current.state.prompterMessage).toBe('Target: dog');
   });
 
-  it('5. Completes repetition and announces Rep 1 complete. Starting rep 2.', () => {
+  it('7. Completes repetition and announces Rep 1 complete. Starting rep 2.', () => {
     const onRepCompleteMock = vi.fn();
     const onSessionCompleteMock = vi.fn();
 
@@ -213,7 +237,7 @@ describe('useTypingEngine Accessibility & Typing Core', () => {
     expect(onSessionCompleteMock).toHaveBeenCalled();
   });
 
-  it('6. Locks session and triggers status when timeLimit expires', () => {
+  it('8. Locks session and triggers status when timeLimit expires', () => {
     const onTimeExpiredMock = vi.fn();
 
     const { result } = renderHook(() =>
