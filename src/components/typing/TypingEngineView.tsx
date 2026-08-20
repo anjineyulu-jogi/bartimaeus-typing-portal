@@ -123,27 +123,35 @@ export const TypingEngineView: React.FC<TypingEngineViewProps> = ({
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (e.altKey) {
-        if (e.key.toLowerCase() === 's') {
+        const k = e.key.toLowerCase();
+        if (k === 's') {
           e.preventDefault();
+          e.stopPropagation();
           if (status === 'idle') startSession();
           else if (status === 'paused') togglePause();
-        } else if (e.key.toLowerCase() === 'p') {
+        } else if (k === 'p') {
           e.preventDefault();
+          e.stopPropagation();
           if (status === 'running' || status === 'paused') togglePause();
-        } else if (e.key.toLowerCase() === 'r') {
+        } else if (k === 'r') {
           e.preventDefault();
+          e.stopPropagation();
           resetEngine(currentDrillIndex);
-        } else if (e.key.toLowerCase() === 'm') {
+        } else if (k === 'm') {
           e.preventDefault();
+          e.stopPropagation();
           onToggleAudio();
-        } else if (e.key.toLowerCase() === 'h') {
+        } else if (k === 'h') {
           e.preventDefault();
+          e.stopPropagation();
           onOpenShortcuts();
-        } else if (e.key.toLowerCase() === 'b') {
+        } else if (k === 'b') {
           e.preventDefault();
+          e.stopPropagation();
           onBackToAssignments();
-        } else if (e.key.toLowerCase() === 'n' && nextAssignment && status === 'completed') {
+        } else if (k === 'n' && nextAssignment && status === 'completed') {
           e.preventDefault();
+          e.stopPropagation();
           if (onSelectNextAssignment) {
             onSelectNextAssignment(nextAssignment);
           }
@@ -151,8 +159,8 @@ export const TypingEngineView: React.FC<TypingEngineViewProps> = ({
       }
     };
 
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+    window.addEventListener('keydown', handleGlobalKeyDown, { capture: true });
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown, { capture: true });
   }, [
     status,
     currentDrillIndex,
@@ -261,14 +269,14 @@ export const TypingEngineView: React.FC<TypingEngineViewProps> = ({
 
       {/* HUD Metrics Dashboard */}
       <section className="hud-metrics-bar" aria-label="Practice Statistics Bar">
-        <div className="hud-card rep-card" aria-live="polite">
+        <div className="hud-card rep-card">
           <span className="hud-label">Repetitions</span>
           <span className="hud-value" aria-label={`Repetition ${currentRep} of ${targetReps}`}>
             {currentRep} <span className="hud-sub">/ {targetReps}</span>
           </span>
         </div>
 
-        <div className="hud-card timer-card" aria-live="polite">
+        <div className="hud-card timer-card">
           <span className="hud-label">
             {timeLimitMinutes > 0 ? 'Time Remaining' : 'Time Elapsed'}
           </span>

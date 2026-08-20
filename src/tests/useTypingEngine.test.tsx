@@ -26,7 +26,7 @@ class AudioContextMock {
 
 (window as any).AudioContext = AudioContextMock;
 
-describe('useTypingEngine Accessibility & Audio Engine', () => {
+describe('useTypingEngine Accessibility & Screen Reader Engine', () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -45,10 +45,10 @@ describe('useTypingEngine Accessibility & Audio Engine', () => {
 
   it('2. Drill word speech formatter spells out anchor letter combinations and keeps real words', () => {
     // Non-dictionary letter clusters spelled out
-    expect(formatWordForSpeech('asdf')).toBe('a, s, d, f');
-    expect(formatWordForSpeech('jkl;')).toBe('j, k, l, semicolon');
-    expect(formatWordForSpeech('fdsa')).toBe('f, d, s, a');
-    expect(formatWordForSpeech('aaa')).toBe('a, a, a');
+    expect(formatWordForSpeech('asdf')).toBe('a s d f');
+    expect(formatWordForSpeech('jkl;')).toBe('j k l semicolon');
+    expect(formatWordForSpeech('fdsa')).toBe('f d s a');
+    expect(formatWordForSpeech('aaa')).toBe('a a a');
 
     // Real words kept natural
     expect(formatWordForSpeech('salad')).toBe('salad');
@@ -74,7 +74,7 @@ describe('useTypingEngine Accessibility & Audio Engine', () => {
     expect(result.current.state.expectedChar).toBe('a');
   });
 
-  it('4. Starts session and updates prompter message with Target: [word]', () => {
+  it('4. Starts session and updates prompter message with Target: [word]. Next: [char]', () => {
     const { result } = renderHook(() =>
       useTypingEngine({
         drills: ['hello world'],
@@ -89,7 +89,7 @@ describe('useTypingEngine Accessibility & Audio Engine', () => {
     });
 
     expect(result.current.state.status).toBe('running');
-    expect(result.current.state.prompterMessage).toBe('Target: hello');
+    expect(result.current.state.prompterMessage).toBe('Target: hello. Next: h');
     expect(result.current.state.statusMessage).toContain('Practice started. Rep 1 of 2.');
   });
 
@@ -122,7 +122,7 @@ describe('useTypingEngine Accessibility & Audio Engine', () => {
     // Must record error
     expect(result.current.state.totalErrors).toBe(1);
     // Must set assertive in-place error correction prompt
-    expect(result.current.state.errorMessage).toBe('Wrong. Type t');
+    expect(result.current.state.errorMessage).toBe('Wrong. Expected: t');
 
     // After 1000ms, error message clears automatically
     act(() => {
@@ -182,7 +182,7 @@ describe('useTypingEngine Accessibility & Audio Engine', () => {
     expect(result.current.state.currentCharIndex).toBe(0);
     expect(result.current.state.inputBuffer).toBe('');
     expect(result.current.state.expectedChar).toBe('d');
-    expect(result.current.state.prompterMessage).toBe('Target: dog');
+    expect(result.current.state.prompterMessage).toBe('Target: dog. Next: d');
   });
 
   it('7. Completes repetition and announces Rep 1 complete. Starting rep 2.', () => {

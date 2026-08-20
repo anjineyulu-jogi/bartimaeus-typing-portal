@@ -3,8 +3,8 @@ import { TypingEngineConfig, TypingEngineState, TypingStatus, Progress } from '.
 import { useSoundEffects } from './useSoundEffects';
 
 /**
- * Phonetic / Accessible Character Name Mapper for Web Speech Synthesis & Screen Readers.
- * Ensures symbols, punctuation, whitespace, and capital letters are pronounced crystal-clearly.
+ * Phonetic / Accessible Character Name Mapper for Screen Readers (NVDA / JAWS / VoiceOver).
+ * Translates symbols, punctuation, whitespace, and capital letters into clear spoken names.
  */
 export function getAccessibleCharName(char: string): string {
   if (!char) return '';
@@ -60,9 +60,9 @@ export function getAccessibleCharName(char: string): string {
 }
 
 /**
- * Formats a target word for speech synthesis.
- * Non-dictionary letter clusters (e.g. "asdf", "jkl;", "fdsa", "aaa") are spelled out letter-by-letter
- * so the speech synthesizer doesn't slur them together as artificial words.
+ * Formats a target word for clear screen reader pronunciation.
+ * Non-dictionary letter clusters (e.g. "asdf", "jkl;", "fdsa", "aaa") are formatted with spaces/names
+ * so screen readers pronounce each individual letter rather than slurring.
  */
 export function formatWordForSpeech(word: string): string {
   if (!word) return '';
@@ -79,7 +79,7 @@ export function formatWordForSpeech(word: string): string {
   ]);
 
   if (hasSymbol || isAllSameChar || isAnchorSequence || (!commonWords.has(word.toLowerCase()) && !/^[a-z]{3,7}$/i.test(word))) {
-    return word.split('').map(getAccessibleCharName).join(', ');
+    return word.split('').map(getAccessibleCharName).join(' ');
   }
 
   return word;
@@ -131,7 +131,7 @@ export function useTypingEngine({
   const [totalCorrect, setTotalCorrect] = useState<number>(0);
   const [totalErrors, setTotalErrors] = useState<number>(0);
 
-  // Screen Reader Live Announcements
+  // Screen Reader Live Announcements (ARIA live polite & assertive)
   const [prompterMessage, setPrompterMessage] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [statusMessage, setStatusMessage] = useState<string>('');
@@ -140,7 +140,7 @@ export function useTypingEngine({
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number | null>(null);
 
-  // Sound effects
+  // Sound effects (Audio synthesized beeps/ticks/chimes)
   const {
     playKeySound,
     playErrorSound,
@@ -149,26 +149,6 @@ export function useTypingEngine({
     playGrandCompleteSound,
     playTimeExpiredSound,
   } = useSoundEffects(audioFeedbackEnabled);
-
-  // Helper for Web Speech synthesis
-  const speakText = useCallback(
-    (text: string, rate: number = 1.1, cancelPrevious: boolean = true) => {
-      if (audioFeedbackEnabled && typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        try {
-          if (cancelPrevious) {
-            window.speechSynthesis.cancel();
-          }
-          const utterance = new SpeechSynthesisUtterance(text);
-          utterance.rate = rate;
-          utterance.pitch = 1.0;
-          window.speechSynthesis.speak(utterance);
-        } catch {
-          // Ignore
-        }
-      }
-    },
-    [audioFeedbackEnabled]
-  );
 
   // Derive Current Word and Expected Character
   const currentWord = drillWords[currentWordIndex] || '';
@@ -198,16 +178,13 @@ export function useTypingEngine({
   // Announce Prompter whenever currentWord changes
   useEffect(() => {
     if (status === 'running' && currentWord) {
-      const spokenTarget = formatWordForSpeech(currentWord);
-      const firstKeyName = getAccessibleCharName(currentWord[0] || expectedChar);
-      const spokenPrompt = `Target: ${spokenTarget}. Type: ${firstKeyName}`;
-
-      setPrompterMessage(`Target: ${currentWord}`);
-      speakText(spokenPrompt, 1.05);
+      const formattedWord = formatWordForSpeech(currentWord);
+      const nextCharName = getAccessibleCharName(currentWord[0] || expectedChar);
+      setPrompterMessage(`Target: ${formattedWord}. Next: ${nextCharName}`);
     }
-  }, [currentWordIndex, currentWord, status, expectedChar, speakText]);
+  }, [currentWordIndex, currentWord, status, expectedChar]);
 
-  // Strategic Milestone-Based Countdown Timer Loop
+  // Timer Loop (Silent for Screen Readers - Only locks on time expiry)
   useEffect(() => {
     if (status === 'running') {
       timerIntervalRef.current = setInterval(() => {
@@ -221,7 +198,6 @@ export function useTypingEngine({
               setStatus('time_expired');
               setStatusMessage('Time expired. Session locked.');
               playTimeExpiredSound();
-              speakText('Time up! Session locked.', 1.1);
 
               if (onTimeExpired) {
                 onTimeExpired({
@@ -240,35 +216,7 @@ export function useTypingEngine({
               }
               return 0;
             }
-
-            const nextTime = prev - 1;
-
-            // Strategic countdown milestones (silent during normal typing)
-            if (nextTime === 60) {
-              speakText('One minute remaining', 1.1, false);
-              setStatusMessage('One minute remaining.');
-            } else if (nextTime === 30) {
-              speakText('Thirty seconds remaining', 1.1, false);
-              setStatusMessage('Thirty seconds remaining.');
-            } else if (nextTime === 15) {
-              speakText('Fifteen seconds', 1.1, false);
-              setStatusMessage('Fifteen seconds remaining.');
-            } else if (nextTime === 10) {
-              speakText('Ten seconds', 1.1, false);
-              setStatusMessage('Ten seconds remaining.');
-            } else if (nextTime === 5) {
-              speakText('Five', 1.15, false);
-            } else if (nextTime === 4) {
-              speakText('Four', 1.15, false);
-            } else if (nextTime === 3) {
-              speakText('Three', 1.15, false);
-            } else if (nextTime === 2) {
-              speakText('Two', 1.15, false);
-            } else if (nextTime === 1) {
-              speakText('One', 1.15, false);
-            }
-
-            return nextTime;
+            return prev - 1;
           });
         }
       }, 1000);
@@ -297,7 +245,6 @@ export function useTypingEngine({
     assignmentId,
     onTimeExpired,
     playTimeExpiredSound,
-    speakText,
   ]);
 
   // Reset / Reconfigure when props change
@@ -305,9 +252,6 @@ export function useTypingEngine({
     (newDrillIndex: number = 0) => {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
       if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
 
       setCurrentDrillIndex(newDrillIndex);
       setCurrentRep(1);
@@ -331,28 +275,25 @@ export function useTypingEngine({
     setStatus('running');
     startTimeRef.current = Date.now();
     const firstWord = drillWords[0] || '';
-    const spokenFirstWord = formatWordForSpeech(firstWord);
+    const formattedWord = formatWordForSpeech(firstWord);
     const firstKey = firstWord[0] ? getAccessibleCharName(firstWord[0]) : '';
-    setPrompterMessage(`Target: ${firstWord}`);
-    setStatusMessage(`Practice started. Rep 1 of ${targetReps}. Type: ${firstKey}`);
-    speakText(`Practice started. Target: ${spokenFirstWord}. Type: ${firstKey}`, 1.05);
-  }, [drillWords, targetReps, speakText]);
+    setPrompterMessage(`Target: ${formattedWord}. Next: ${firstKey}`);
+    setStatusMessage(`Practice started. Rep 1 of ${targetReps}.`);
+  }, [drillWords, targetReps]);
 
   // Pause / Resume Session
   const togglePause = useCallback(() => {
     if (status === 'running') {
       setStatus('paused');
       setStatusMessage('Practice paused. Press Alt+P or space to resume.');
-      speakText('Practice paused. Press Alt+P or space to resume.', 1.1);
     } else if (status === 'paused') {
       setStatus('running');
       setStatusMessage('Practice resumed.');
-      const spokenWord = formatWordForSpeech(currentWord);
-      const nextKey = getAccessibleCharName(expectedChar);
-      speakText(`Practice resumed. Target: ${spokenWord}. Type: ${nextKey}`, 1.05);
-      setPrompterMessage(`Target: ${currentWord}`);
+      const formattedWord = formatWordForSpeech(currentWord);
+      const nextCharName = getAccessibleCharName(expectedChar);
+      setPrompterMessage(`Target: ${formattedWord}. Next: ${nextCharName}`);
     }
-  }, [status, currentWord, expectedChar, speakText]);
+  }, [status, currentWord, expectedChar]);
 
   // Immediate In-Place Error Correction Handler
   const triggerError = useCallback(
@@ -361,10 +302,9 @@ export function useTypingEngine({
       playErrorSound();
 
       const expectedName = getAccessibleCharName(expectedChar);
-      const errorText = `Wrong. Type ${expectedName}`;
+      const errorText = `Wrong. Expected: ${expectedName}`;
 
       setErrorMessage(errorText);
-      speakText(errorText, 1.2);
 
       if (errorTimeoutRef.current) {
         clearTimeout(errorTimeoutRef.current);
@@ -373,7 +313,7 @@ export function useTypingEngine({
         setErrorMessage('');
       }, 1000);
     },
-    [expectedChar, playErrorSound, speakText]
+    [expectedChar, playErrorSound]
   );
 
   // Key Interception and Evaluation Handler
@@ -394,9 +334,13 @@ export function useTypingEngine({
         return;
       }
 
-      // Ignore modifier keys, tab, escape, function keys
+      // Allow Alt shortcuts (Alt+H, Alt+S, Alt+P, Alt+R, Alt+M, Alt+B) to bubble to window listener
+      if (e.altKey) {
+        return;
+      }
+
+      // Ignore other modifier keys, tab, escape, function keys
       if (
-        e.altKey ||
         e.ctrlKey ||
         e.metaKey ||
         e.key === 'Shift' ||
@@ -448,9 +392,7 @@ export function useTypingEngine({
                 timestamp: new Date().toISOString(),
               };
 
-              const grandMsg = `Congratulations! All ${targetReps} reps completed in ${Math.floor(timeElapsed / 60)} minutes with ${accuracy}% accuracy!`;
-              setStatusMessage(grandMsg);
-              speakText(grandMsg, 1.05);
+              setStatusMessage(`Congratulations! All ${targetReps} reps completed with ${accuracy}% accuracy!`);
 
               if (onSessionComplete) {
                 onSessionComplete(finalStats);
@@ -462,9 +404,7 @@ export function useTypingEngine({
               setCurrentCharIndex(0);
               playRepCompleteSound();
 
-              const repMsg = `Rep ${currentRep} complete. Starting rep ${nextRep} of ${targetReps}.`;
-              setStatusMessage(repMsg);
-              speakText(repMsg, 1.1);
+              setStatusMessage(`Rep ${currentRep} complete. Starting rep ${nextRep} of ${targetReps}.`);
 
               if (onRepComplete) {
                 onRepComplete(currentRep, {
@@ -526,7 +466,6 @@ export function useTypingEngine({
       playWordCompleteSound,
       playRepCompleteSound,
       playGrandCompleteSound,
-      speakText,
       onRepComplete,
       onSessionComplete,
     ]

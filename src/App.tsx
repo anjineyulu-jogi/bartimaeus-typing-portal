@@ -116,6 +116,18 @@ export const App: React.FC = () => {
     saveFontSize(fontSize);
   }, [fontSize]);
 
+  // Global Alt+H shortcut for Screen Reader & User Help
+  useEffect(() => {
+    const handleGlobalShortcuts = (e: KeyboardEvent) => {
+      if (e.altKey && e.key.toLowerCase() === 'h') {
+        e.preventDefault();
+        setIsShortcutsOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalShortcuts, { capture: true });
+    return () => window.removeEventListener('keydown', handleGlobalShortcuts, { capture: true });
+  }, []);
+
   // Auth Handlers
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
