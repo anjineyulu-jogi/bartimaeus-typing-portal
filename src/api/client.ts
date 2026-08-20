@@ -198,6 +198,112 @@ export async function apiSaveAssignment(assignment: Assignment): Promise<Assignm
   return saveSingleAssignment(assignment);
 }
 
+export async function apiFetchUsers(): Promise<User[]> {
+  try {
+    if (await isServerOnline()) {
+      const res = await fetch(`${API_BASE}/users`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.users && Array.isArray(data.users)) {
+          // Merge with local users to ensure no local records are lost
+          const localUsers = loadUsers();
+          const merged = [...data.users];
+          localUsers.forEach((lu) => {
+            if (!merged.some((u) => u.id === lu.id || u.name.toLowerCase() === lu.name.toLowerCase())) {
+              merged.push(lu);
+            }
+          });
+          saveUsers(merged);
+          return merged;
+        }
+      }
+    }
+  } catch {
+    // Fall back
+  }
+  return loadUsers();
+}
+
+export async function apiSaveUser(user: User): Promise<User[]> {
+  try {
+    if (await isServerOnline()) {
+      const res = await fetch(`${API_BASE}/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(user),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.users) {
+          saveUsers(data.users);
+          return data.users;
+        }
+      }
+    }
+  } catch {
+    // Save locally
+  }
+  const current = loadUsers();
+  const index = current.findIndex((u) => u.id === user.id);
+  if (index >= 0) {
+    current[index] = user;
+  } else {
+    current.push(user);
+  }
+  saveUsers(current);
+  return current;
+}
+
+export async function apiResetUserPassword(userId: string, newPassword: string): Promise<User[]> {
+  try {
+    if (await isServerOnline()) {
+      const res = await fetch(`${API_BASE}/users/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, newPassword }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.users) {
+          saveUsers(data.users);
+          return data.users;
+        }
+      }
+    }
+  } catch {
+    // Reset locally
+  }
+  const current = loadUsers();
+  const target = current.find((u) => u.id === userId);
+  if (target) {
+    target.password = newPassword;
+    saveUsers(current);
+  }
+  return current;
+}
+
+export async function apiDeleteUser(userId: string): Promise<User[]> {
+  try {
+    if (await isServerOnline()) {
+      const res = await fetch(`${API_BASE}/users/${userId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.users) {
+          saveUsers(data.users);
+          return data.users;
+        }
+      }
+    }
+  } catch {
+    // Delete locally
+  }
+  const current = loadUsers().filter((u) => u.id !== userId);
+  saveUsers(current);
+  return current;
+}
+
 export async function apiDeleteAssignment(id: string): Promise<Assignment[]> {
   try {
     if (await isServerOnline()) {

@@ -33,6 +33,7 @@ interface InstructorPortalProps {
   onSaveAssignment: (assignment: Assignment) => void;
   onDeleteAssignment: (id: string) => void;
   onAddUser: (user: User) => void;
+  onResetPassword?: (userId: string, newPassword: string) => void;
 }
 
 export const InstructorPortal: React.FC<InstructorPortalProps> = ({
@@ -43,6 +44,7 @@ export const InstructorPortal: React.FC<InstructorPortalProps> = ({
   onSaveAssignment,
   onDeleteAssignment,
   onAddUser,
+  onResetPassword,
 }) => {
   const isSuperAdmin = currentUser.role === 'SuperAdmin';
   const [activeTab, setActiveTab] = useState<'assignments' | 'progress' | 'students' | 'instructors'>('assignments');
@@ -182,11 +184,15 @@ export const InstructorPortal: React.FC<InstructorPortalProps> = ({
     setIsNewStaffModalOpen(false);
   };
 
-  const handleResetPasswordSubmit = (e: React.FormEvent) => {
+  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!resetModalUser || !resetNewPassword.trim()) return;
 
-    resetModalUser.password = resetNewPassword.trim();
+    if (onResetPassword) {
+      await onResetPassword(resetModalUser.id, resetNewPassword.trim());
+    } else {
+      resetModalUser.password = resetNewPassword.trim();
+    }
     setResetSuccessMessage(`Password updated successfully for ${resetModalUser.name}`);
     setTimeout(() => {
       setResetModalUser(null);

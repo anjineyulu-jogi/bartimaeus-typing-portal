@@ -21,6 +21,10 @@ import {
   apiSaveProgress,
   apiSaveAssignment,
   apiDeleteAssignment,
+  apiFetchUsers,
+  apiSaveUser,
+  apiResetUserPassword,
+  apiDeleteUser,
 } from './api/client';
 import { Navbar } from './components/layout/Navbar';
 import { StudentPortal } from './components/student/StudentPortal';
@@ -80,8 +84,19 @@ export const App: React.FC = () => {
   const [audioEnabled, setAudioEnabled] = useState<boolean>(loadAudioEnabled);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState<boolean>(false);
 
-  // Sync Curriculum & Progress on Boot / Login
+  // Sync Users, Curriculum & Progress on Boot / Login
   const refreshData = useCallback(async (userId?: string) => {
+    // 1. Fetch Users from Server API
+    try {
+      const fetchedUsers = await apiFetchUsers();
+      if (fetchedUsers && fetchedUsers.length > 0) {
+        setUsers(fetchedUsers);
+      }
+    } catch {
+      // Handled
+    }
+
+    // 2. Fetch Curriculum from Server API
     let cur = await apiFetchCurriculum();
     if (!cur || cur.length < DEFAULT_ASSIGNMENTS.length) {
       const defaultIds = new Set(DEFAULT_ASSIGNMENTS.map((d) => d.id));
@@ -93,6 +108,7 @@ export const App: React.FC = () => {
     }
     setAssignments(cur);
 
+    // 3. Fetch Student Progress
     if (userId) {
       const prog = await apiFetchProgress(userId);
       setProgressList(prog);
@@ -196,17 +212,30 @@ export const App: React.FC = () => {
   const handleSaveAssignment = async (assignment: Assignment) => {
     const updated = await apiSaveAssignment(assignment);
     setAssignments(updated);
+    if (currentUser) {
+      refreshData(currentUser.id);
+    }
   };
 
   const handleDeleteAssignment = async (id: string) => {
     const updated = await apiDeleteAssignment(id);
     setAssignments(updated);
+    if (currentUser) {
+      refreshData(currentUser.id);
+    }
   };
 
-  const handleAddUser = (user: User) => {
-    const updated = [...users, user];
+  const handleAddUser = async (user: User) => {
+    const updated = await apiSaveUser(user);
     setUsers(updated);
-    saveUsers(updated);
+    if (currentUser) {
+      refreshData(currentUser.id);
+    }
+  };
+
+  const handleResetPassword = async (userId: string, newPassword: string) => {
+    const updated = await apiResetUserPassword(userId, newPassword);
+    setUsers(updated);
   };
 
   // Audio Toggle
@@ -265,6 +294,7 @@ export const App: React.FC = () => {
             onSaveAssignment={handleSaveAssignment}
             onDeleteAssignment={handleDeleteAssignment}
             onAddUser={handleAddUser}
+            onResetPassword={handleResetPassword}
           />
         ) : (
           <StudentPortal

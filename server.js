@@ -1109,6 +1109,76 @@ app.post('/api/progress', (req, res) => {
 });
 
 /**
+ * User Management APIs: Get All Users, Add/Update User, Reset Password, Delete User
+ */
+app.get('/api/users', (req, res) => {
+  const users = getUsers();
+  // Return all registered users
+  res.json({ users });
+});
+
+app.post('/api/users', (req, res) => {
+  const user = req.body;
+  if (!user || !user.name) {
+    return res.status(400).json({ error: 'User name is required' });
+  }
+
+  const users = getUsers();
+  const index = users.findIndex((u) => u.id === user.id || u.name.trim().toLowerCase() === user.name.trim().toLowerCase());
+
+  if (index >= 0) {
+    users[index] = { ...users[index], ...user };
+  } else {
+    const newUser = {
+      id: user.id || `user-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      name: user.name.trim(),
+      role: user.role || 'Student',
+      password: user.password ? user.password.trim() : user.role === 'Teacher' ? 'trainer123' : 'student',
+      email: user.email?.trim() || '',
+      notes: user.notes?.trim() || '',
+      createdAt: user.createdAt || new Date().toISOString(),
+      isActive: user.isActive !== false,
+    };
+    users.push(newUser);
+  }
+
+  saveUsers(users);
+  res.json({ success: true, users });
+});
+
+app.post('/api/users/reset-password', (req, res) => {
+  const { userId, newPassword } = req.body;
+  if (!userId || !newPassword) {
+    return res.status(400).json({ error: 'userId and newPassword are required' });
+  }
+
+  const users = getUsers();
+  const user = users.find((u) => u.id === userId);
+  if (!user) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+
+  user.password = newPassword.trim();
+  saveUsers(users);
+
+  res.json({ success: true, message: `Password reset successfully for ${user.name}`, users });
+});
+
+app.delete('/api/users/:id', (req, res) => {
+  const { id } = req.params;
+  let users = getUsers();
+  const target = users.find((u) => u.id === id);
+
+  if (target && target.role === 'SuperAdmin') {
+    return res.status(403).json({ error: 'Cannot delete SuperAdmin account' });
+  }
+
+  users = users.filter((u) => u.id !== id);
+  saveUsers(users);
+  res.json({ success: true, users });
+});
+
+/**
  * Instructor API: Get All Enrolled Students & Summary Analytics
  */
 app.get('/api/teacher/students', (req, res) => {
@@ -1160,13 +1230,13 @@ app.post('/api/teacher/students/reset-password', (req, res) => {
   student.password = newPassword.trim();
   saveUsers(users);
 
-  res.json({ success: true, message: `Password reset successfully for ${student.name}` });
+  res.json({ success: true, message: `Password reset successfully for ${student.name}`, users });
 });
 
 /**
- * Instructor API: Save or Update Assignment
+ * Assignments API (Curriculum Management)
  */
-app.post('/api/teacher/assignments', (req, res) => {
+const saveOrUpdateAssignmentHandler = (req, res) => {
   const assignment = req.body;
   if (!assignment.title || !assignment.drills || !assignment.drills.length) {
     return res.status(400).json({ error: 'Assignment title and drills are required' });
@@ -1178,33 +1248,38 @@ app.post('/api/teacher/assignments', (req, res) => {
   if (index >= 0) {
     assignments[index] = { ...assignments[index], ...assignment };
   } else {
-    // Determine orderIndex if not provided
     const maxOrder = assignments.reduce((max, a) => Math.max(max, a.orderIndex || 0), 0);
     const newAssignment = {
       id: assignment.id || `drill-${Date.now()}`,
       orderIndex: assignment.orderIndex || maxOrder + 1,
       targetReps: assignment.targetReps || 10,
       timeLimitMinutes: assignment.timeLimitMinutes || 5,
+      minAccuracy: assignment.minAccuracy || 80,
+      category: assignment.category || 'Category 1: Tactile Foundations & Home Row',
+      categoryIndex: assignment.categoryIndex || 1,
       ...assignment,
-      createdAt: new Date().toISOString().split('T')[0],
+      createdAt: assignment.createdAt || new Date().toISOString().split('T')[0],
     };
     assignments.push(newAssignment);
   }
 
   saveAssignments(assignments);
   res.json({ success: true, assignments });
-});
+};
 
-/**
- * Instructor API: Delete Assignment
- */
-app.delete('/api/teacher/assignments/:id', (req, res) => {
+app.post('/api/teacher/assignments', saveOrUpdateAssignmentHandler);
+app.post('/api/assignments', saveOrUpdateAssignmentHandler);
+
+const deleteAssignmentHandler = (req, res) => {
   const { id } = req.params;
   let assignments = getAssignments();
   assignments = assignments.filter((a) => a.id !== id);
   saveAssignments(assignments);
   res.json({ success: true, assignments });
-});
+};
+
+app.delete('/api/teacher/assignments/:id', deleteAssignmentHandler);
+app.delete('/api/assignments/:id', deleteAssignmentHandler);
 
 // -----------------------------------------------------------------------------
 // Serve Production Frontend SPA
